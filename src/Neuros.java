@@ -3,94 +3,98 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Random;
 import java.util.Vector;
-import org.json.simple.*;
 
 public class Neuros {
-	//FLAGS used to control execution
-	// the initial number of neurons to seed with.
-	static int NUMBER_OF_NEURONS = 1000;
+ 	// the initial number of neurons to seed with.
+	static int NUMBER_OF_NEURONS = 3;
 	// the number of cycles the charge will travel
-	static int NUMBER_OF_PHASES = 10000; 
-	// artificially add a neuron every this many phases
-	static int NEURON_EVERY = 2;
-	// how many neurons long should a charge's history be?
-	static int CHARGE_HISTORY_MAX_LENGTH = 5;
-	//Whether or not to take charge recency into account when incrementing strength
+	static int NUMBER_OF_PHASES = 100000000;
+ 	// artificially add a neuron every this many phases
+	static int NEURON_EVERY = 1000;
+ 	// The length of a charge's history
+	static int CHARGE_HISTORY_MAX_LENGTH = 3;
+	//Whether or not history recency should be weighted
 	static boolean HISTORICAL_WEIGHTING = true;
-	//Whether or not branches should always be created bidirectionally.
-	static boolean BIDIRECTIONAL_BRANCHES = true;
-	//Whether or not created branches should have equal strength
-	static boolean EQUAL_BIDIRECTIONAL_STRENGTH = false;
-	//flag of current phase
-	static int phase;
-	//Neuron network container
-	static Vector<Neuron> neurons;
+	static boolean BIDIRECTIONAL_BRANCHES = true; // if a branch is created from neuron A => B, should a branch be created from B => A?
+	static boolean EQUAL_BIDIRECTIONAL_STRENGTH = false; // assuming bidirectional is true, should the other branch be incremented with the same value? or just 1.
+	static boolean ARTIFICIALLY_MOVE_CHARGE = false; // should the charge be automatically moved to newly created neurons?
+	static int HARD_TRIM_EVERY = 1000; // how often should a hard trim run, on the neuronal level? a hard trim deletes any branches below the average.
+	static boolean SIMPLE_CHARGE = false; // should neuros run under a simple charge system? in simple, only one charge runs for 'X' phases. In a complex system, many charges will run concurrently,
+											// for
+											// a fixed time or total phases.
+	static int phase; // the current phase number
+	static Vector<Neuron> neurons; // a container for neurons, which through sub-objects holds all components of the runtime
+	static Vector<ComplexCharge> charges; // only used when SIMPLE_CHARGE is off, and multiple threaded charges are used
 
 	public static void main(String[] args) {
-		//Start time of network building
+		// TODO Auto-generated method stub
 		long startTime = System.currentTimeMillis();
-		//initialize network container
 		neurons = new Vector<Neuron>();
+		charges = new Vector<ComplexCharge>();
 		buildNetwork(NUMBER_OF_NEURONS);
-		logNetwork(startTime);
-		System.out.println(
-		"The network has been generated, and it's initial state has been saved.");
-		System.out.println(
-		"A charge will be started on neuron 1, and will run for "+ NUMBER_OF_PHASES + " phases.");
-		Charge charge = new Charge(neurons.elementAt(0));
-		//Run the necessary number of phases
-		while (phase < NUMBER_OF_PHASES) {
-			charge.arrive();
-			// if the phase is synced up with "NEW NEURON EVERY" flag add a new neuron
-			if (phase % NEURON_EVERY == 0) {
-				//Add a new branching neuron, and artifically move the charge there
-				Neuron neuron = addNewNeuron(charge.getCurrentLocation());
-				charge.move(neuron).logId();
-			} else {
-				charge.move().logId();
+		System.out.println("The network has been generated, and it's initial state has been saved.");
+		System.out.println("A charge will be started on neuron 1, and will run for " + NUMBER_OF_PHASES + " phases.");
+
+		if (SIMPLE_CHARGE) {
+			Charge charge = new Charge(neurons.elementAt(0));
+			while (phase < NUMBER_OF_PHASES) { // run the number of phases necessary
+				charge.arrive(phase % HARD_TRIM_EVERY == 0); // run arrival code
+				// if the phase is synced up with "NEW NEURON EVERY" add a new neuron
+				if (phase % NEURON_EVERY == 0) {
+					Neuron neuron = addNewNeuron(charge.getCurrentLocation()); // adds a new neuron, stemming from current location
+					if (ARTIFICIALLY_MOVE_CHARGE) {
+						charge.move(neuron);// artifically move the charge to the new neuron
+					}
+				} else {
+					charge.move();
+				}
+				phase += 1;
+				if ((phase) % (NUMBER_OF_PHASES / 10) == 0) {
+					System.out.println("Phasing is " + (int) (100 * ((double) phase / (double) NUMBER_OF_PHASES))
+							+ "% complete. " + neurons.size() + " neurons have been created.");
+				}
 			}
-			phase += 1;
+			System.out.println("Charge phasing has completed, at an average rate of "
+					+ (float) NUMBER_OF_PHASES / (float) ((System.currentTimeMillis() - startTime) / 1000)
+					+ " phases/second. The network will now be analyzed and saved.");
+			closeNetwork(startTime);
+		} else {
+			ComplexCharge.createComplexCharge();
 		}
-		//Log the state of the network to file
-		logNetwork(startTime);
-		System.out.println(
-		"Charge phasing has completed, the network's current state has been saved");
 	}
-	//Function to add new Neuron branching from a specific root neuron.
-	public static Neuron addNewNeuron(Neuron root) {
-		//Create neuron, and add to network container
-		Neuron neuron = new Neuron();
-		neurons.addElement(neuron);
-		//Assign the new neuron a connection strength equal to the root's average
-		int startingStrength = root.getAverageStrength();
+
+	public static void closeNetwork(long startTime) {
+		System.out.println("Neuros activity has finished. The network will now be analyzed and saved.");
+		logNetwork(startTime, true);
+		logNetwork(startTime, false);
+		System.out.println("Network interpretation has completed, the network's current state has been saved");
+	}
+
+	public static Neuron addNewNeuron(Neuron root) {// add a new neuron, stemming of the root neuron
+		Neuron neuron = new Neuron(); // create a new neuronD
+		neurons.addElement(neuron); // add the neuron to the registry vector
+		int startingStrength = root.getAverageStrength(); // assign the strength to the average of the root neuron, to give it a chance to grow
 		neuron.incrementConnection(root, startingStrength, true, true);
 		return neuron;
 	}
-	//Generate a neuron network, and pseudorandomly build connections
+
 	private static void buildNetwork(int numNeurons) {
 		for (int x = 0; x < numNeurons; x++) {
-			//Create a new neuron, and add it to the container
 			Neuron neuron = new Neuron();
 			neurons.addElement(neuron);
-			//New neuron has no connections
 			int connections = 0;
-			//initialize the Random class
 			Random random = new Random();
-			//Randomly choose which index of the network to begin making connections from
 			int startingBound;
 			if (neurons.size() > 2) {
 				startingBound = random.nextInt(neurons.size() - 2);
 			} else {
 				startingBound = 0;
 			}
-			//Iterate through neurons, forming a connection with up to 20 based on random booleans
-			for (int y = startingBound; y < neurons.size() - 1; y++) {
-				//Guarantee the addition of at least one connection
+			for (int y = startingBound; y < neurons.size() - 1; y++) { // iterate through neurons, and randomly establish connections with up to 20
 				if (connections == 0) {
-					neuron.incrementConnection(neurons.elementAt(y));
+					neuron.incrementConnection(neurons.elementAt(y)); // add at least one connection, guaranteed
 					connections += 1;
-				} else if (connections <= 20) {
-					//Establish a maximum of twenty connections randomly
+				} else if (connections <= 20) { // maximum 20 connections for now
 					if (random.nextBoolean()) {
 						neuron.incrementConnection(neurons.elementAt(y));
 						connections += 1;
@@ -101,13 +105,18 @@ public class Neuros {
 			}
 		}
 	}
-	//Log network to file
-	public static void logNetwork(long startTime) {
-		String logFileName = "LOGS/NEUROS_NETWORK_"
-				+ String.valueOf(System.currentTimeMillis()) + ".neuros";
+
+	public static void logNetwork(String name, long startTime, Boolean machineFile) {
+		String logFileName = "LOGS/STATE_" + name + String.valueOf(System.currentTimeMillis())
+				+ ((machineFile) ? ".nms" : ".nhrs"); // toggles between a NeurosMachineState and NeurosHumanState file
 		try {
 			PrintWriter writer = new PrintWriter(logFileName, "UTF-8");
-			writer.println(neurons);
+			if (!machineFile) { // human readable file desired
+				writer.println(neurons);
+			} else {
+				// log a compressed nms file, to be machine interpreted
+				writer.print(NMSInterpreter.createNMS(neurons));
+			}
 			writer.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -116,12 +125,10 @@ public class Neuros {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
-	public static void logJson(Vector<Neuron> neurons) {
-		for (Neuron neuron : neurons) {
 
-		}
+	public static void logNetwork(long startTime, Boolean machineFile) {
+		logNetwork("", startTime, machineFile);
 	}
 
 }
