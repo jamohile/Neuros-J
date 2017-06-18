@@ -6,33 +6,29 @@ import java.util.Vector;
 import org.json.simple.*;
 
 public class Neuros {
-	static int NUMBER_OF_NEURONS = 1000; // the initial number of neurons to seed
-											// with.
-	static int NUMBER_OF_PHASES = 10000; // the number of cycles the charge will
-											// travel
-	static int NEURON_EVERY = 2; // artificially add a neuron every this many phases
-	static int CHARGE_HISTORY_MAX_LENGTH = 5; // how many neurons long should a
-												// charge's
-												// history be?
-	static boolean HISTORICAL_WEIGHTING = true; // when analyzing a charge's
-												// history, should more recent
-												// destinations receive higher
-												// incrementations?
-	static boolean BIDIRECTIONAL_BRANCHES = true; // if a branch is created from
-													// neuron A => B, should a branch
-													// be created from B => A?
-	static boolean EQUAL_BIDIRECTIONAL_STRENGTH = false; // assuming bidirectional is
-															// true, should the other
-															// branch be incremented
-															// with the same value?
-															// or just 1.
-
-	static int phase; // the current phase number
+	// the initial number of neurons to seed with.
+	static int NUMBER_OF_NEURONS = 1000;
+	// the number of cycles the charge will travel
+	static int NUMBER_OF_PHASES = 10000; 
+	// artificially add a neuron every this many phases
+	static int NEURON_EVERY = 2;
+	// how many neurons long should a charge's history be?
+	static int CHARGE_HISTORY_MAX_LENGTH = 5;
+	//Whether or not to take charge recency into account when incrementing strength
+	static boolean HISTORICAL_WEIGHTING = true;
+	//Whether or not branches should always be created bidirectionally.
+	static boolean BIDIRECTIONAL_BRANCHES = true;
+	//Whether or not created branches should have equal strength
+	static boolean EQUAL_BIDIRECTIONAL_STRENGTH = false;
+	//flag of current phase
+	static int phase;
+	//Neuron network container
 	static Vector<Neuron> neurons;
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		//Start time of network building
 		long startTime = System.currentTimeMillis();
+		//initialize network container
 		neurons = new Vector<Neuron>();
 		buildNetwork(NUMBER_OF_NEURONS);
 		logNetwork(startTime);
@@ -47,32 +43,25 @@ public class Neuros {
 			charge.arrive(); // run arrival code
 			// if the phase is synced up with "NEW NEURON EVERY" add a new neuron
 			if (phase % NEURON_EVERY == 0) {
-				Neuron neuron = addNewNeuron(charge.getCurrentLocation()); // adds a
-																			// new
-																			// neuron,
-				// using the current
-				// location as a root
-
-				charge.move(neuron).logId();// artifically move the charge to the new
-											// neuron
+				//Add a new branching neuron, and artifically move the charge there
+				Neuron neuron = addNewNeuron(charge.getCurrentLocation());
+				charge.move(neuron).logId();
 			} else {
 				charge.move().logId();
 			}
-
 			phase += 1;
 		}
 		logNetwork(startTime);
 		System.out.println(
 				"Charge phasing has completed, the network's current state has been saved");
 	}
-	public static Neuron addNewNeuron(Neuron root) {// add a new neuron, stemming of
-													// the root neuron
-		Neuron neuron = new Neuron(); // create a new neuron
-		neurons.addElement(neuron); // add the neuron to the registry vector
-		int startingStrength = root.getAverageStrength(); // assign the strength to
-															// the average of the
-															// root neuron, to give
-															// it a chance to grow
+	//Function to add new Neuron branching from a specific root neuron.
+	public static Neuron addNewNeuron(Neuron root) {
+		//Create neuron, and add to network container
+		Neuron neuron = new Neuron();
+		neurons.addElement(neuron);
+		//Assign the new neuron a connection strength equal to the root's average
+		int startingStrength = root.getAverageStrength();
 		neuron.incrementConnection(root, startingStrength, true, true);
 		return neuron;
 	}
