@@ -1,14 +1,14 @@
 import java.util.Random;
 import java.util.Vector;
 
-import org.json.simple.JSONObject;
-
 public class Neuron {
 	static int lastID; // provides a way for neurons to always have
 						// unique
 						// id's
 	private Integer id;
 	private BranchReferenceManager branchReferenceManager;
+	int totalBranches; //stores all branches, inbound and outbound
+	boolean hasCharge = false; //does the neuron CURRENTLY have a complex charge? used to manage concurrency
 
 	public Neuron() {
 		// TODO Auto-generated constructor stub
@@ -60,14 +60,21 @@ public class Neuron {
 	public Branch getBranchByStrength(int strength) {
 		return branchReferenceManager.getBranchByStrength(strength);
 	}
+	public void hardTrim(){
+		branchReferenceManager.hardTrim();
+	}
 	public Branch getProbableDestinationBranch() { // returns the likely branch that
 													// a charge
 		// will travel to, based on the weighted
 		// probability search system
 		Random random = new Random();
-		int destinationStrengthBound = random
-				.nextInt(branchReferenceManager.getTotalStrength());
-		return getBranchByStrength(destinationStrengthBound);
+		int bound = branchReferenceManager.getTotalStrength();
+		if (bound != 0) {
+			int destinationStrengthBound = random.nextInt(bound);
+			return getBranchByStrength(destinationStrengthBound);
+		}else{
+			return null;
+		}
 	}
 	public void updateBranches(Vector<Neuron> history) {// a charge will deliver it's
 														// history dump to this
@@ -84,6 +91,10 @@ public class Neuron {
 			}
 		}
 	}
+
+	public final Vector<Branch> getBranches(){
+		return this.branchReferenceManager.branches;
+	}
 	public int getId() {
 		return id;
 	}
@@ -98,9 +109,4 @@ public class Neuron {
 		// TODO Auto-generated method stub
 		return "\n\tNeuron: " + id + branchReferenceManager.toString();
 	}
-	public JSONObject logJson(){
-		JSONObject jsonObject = new JSONObject();
-		jsonObject.
-	}
-
 }
