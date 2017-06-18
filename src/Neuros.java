@@ -6,6 +6,7 @@ import java.util.Vector;
 import org.json.simple.*;
 
 public class Neuros {
+	//FLAGS used to control execution
 	// the initial number of neurons to seed with.
 	static int NUMBER_OF_NEURONS = 1000;
 	// the number of cycles the charge will travel
@@ -33,15 +34,14 @@ public class Neuros {
 		buildNetwork(NUMBER_OF_NEURONS);
 		logNetwork(startTime);
 		System.out.println(
-				"The network has been generated, and it's initial state has been saved.");
+		"The network has been generated, and it's initial state has been saved.");
 		System.out.println(
-				"A charge will be started on neuron 1, and will run for "
-						+ NUMBER_OF_PHASES + " phases.");
+		"A charge will be started on neuron 1, and will run for "+ NUMBER_OF_PHASES + " phases.");
 		Charge charge = new Charge(neurons.elementAt(0));
-
-		while (phase < NUMBER_OF_PHASES) { // run the number of phases necessary
-			charge.arrive(); // run arrival code
-			// if the phase is synced up with "NEW NEURON EVERY" add a new neuron
+		//Run the necessary number of phases
+		while (phase < NUMBER_OF_PHASES) {
+			charge.arrive();
+			// if the phase is synced up with "NEW NEURON EVERY" flag add a new neuron
 			if (phase % NEURON_EVERY == 0) {
 				//Add a new branching neuron, and artifically move the charge there
 				Neuron neuron = addNewNeuron(charge.getCurrentLocation());
@@ -51,9 +51,10 @@ public class Neuros {
 			}
 			phase += 1;
 		}
+		//Log the state of the network to file
 		logNetwork(startTime);
 		System.out.println(
-				"Charge phasing has completed, the network's current state has been saved");
+		"Charge phasing has completed, the network's current state has been saved");
 	}
 	//Function to add new Neuron branching from a specific root neuron.
 	public static Neuron addNewNeuron(Neuron root) {
@@ -65,34 +66,31 @@ public class Neuros {
 		neuron.incrementConnection(root, startingStrength, true, true);
 		return neuron;
 	}
+	//Generate a neuron network, and pseudorandomly build connections
 	private static void buildNetwork(int numNeurons) {
 		for (int x = 0; x < numNeurons; x++) {
+			//Create a new neuron, and add it to the container
 			Neuron neuron = new Neuron();
 			neurons.addElement(neuron);
+			//New neuron has no connections
 			int connections = 0;
+			//initialize the Random class
 			Random random = new Random();
+			//Randomly choose which index of the network to begin making connections from
 			int startingBound;
 			if (neurons.size() > 2) {
 				startingBound = random.nextInt(neurons.size() - 2);
 			} else {
 				startingBound = 0;
 			}
-			for (int y = startingBound; y < neurons.size() - 1; y++) { // iterate
-																		// through
-																		// the
-																		// neurons,
-																		// and
-																		// randomly
-																		// establish
-																		// connections
-																		// with up to
-																		// 10
+			//Iterate through neurons, forming a connection with up to 20 based on random booleans
+			for (int y = startingBound; y < neurons.size() - 1; y++) {
+				//Guarantee the addition of at least one connection
 				if (connections == 0) {
-					neuron.incrementConnection(neurons.elementAt(y)); // add one
-																		// connection,
-																		// guaranteed
+					neuron.incrementConnection(neurons.elementAt(y));
 					connections += 1;
-				} else if (connections <= 20) { // maximum 10 connections for now
+				} else if (connections <= 20) {
+					//Establish a maximum of twenty connections randomly
 					if (random.nextBoolean()) {
 						neuron.incrementConnection(neurons.elementAt(y));
 						connections += 1;
@@ -103,6 +101,7 @@ public class Neuros {
 			}
 		}
 	}
+	//Log network to file
 	public static void logNetwork(long startTime) {
 		String logFileName = "LOGS/NEUROS_NETWORK_"
 				+ String.valueOf(System.currentTimeMillis()) + ".neuros";
