@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.Vector;
 
 public class Neuros {
+	//PROGRAM FLAGS, values adjusted before runtime to control execution
  	// the initial number of neurons to seed with.
 	static int NUMBER_OF_NEURONS = 3;
 	// the number of cycles the charge will travel
@@ -15,37 +16,47 @@ public class Neuros {
 	static int CHARGE_HISTORY_MAX_LENGTH = 3;
 	//Whether or not history recency should be weighted
 	static boolean HISTORICAL_WEIGHTING = true;
-	static boolean BIDIRECTIONAL_BRANCHES = true; // if a branch is created from neuron A => B, should a branch be created from B => A?
-	static boolean EQUAL_BIDIRECTIONAL_STRENGTH = false; // assuming bidirectional is true, should the other branch be incremented with the same value? or just 1.
-	static boolean ARTIFICIALLY_MOVE_CHARGE = false; // should the charge be automatically moved to newly created neurons?
-	static int HARD_TRIM_EVERY = 1000; // how often should a hard trim run, on the neuronal level? a hard trim deletes any branches below the average.
-	static boolean SIMPLE_CHARGE = false; // should neuros run under a simple charge system? in simple, only one charge runs for 'X' phases. In a complex system, many charges will run concurrently,
-											// for
-											// a fixed time or total phases.
-	static int phase; // the current phase number
-	static Vector<Neuron> neurons; // a container for neurons, which through sub-objects holds all components of the runtime
-	static Vector<ComplexCharge> charges; // only used when SIMPLE_CHARGE is off, and multiple threaded charges are used
-
+	//Whether or not branches should be created bidirectionally
+	static boolean BIDIRECTIONAL_BRANCHES = true;
+	//Whether or not branches should have equal strength when created bidirectionally
+	static boolean EQUAL_BIDIRECTIONAL_STRENGTH = false;
+	//Whether or not charges should be artificially moved to newly created neurons
+	static boolean ARTIFICIALLY_MOVE_CHARGE = false;
+	//The number of phases between hard trims
+	static int HARD_TRIM_EVERY = 1000;
+	//If false, Neuros will run only one charge - synchrously. Else multiple asynchrous.
+	static boolean SIMPLE_CHARGE = false;
+	// the current phase number
+	static int phase;
+	// a container for neurons, which through sub-objects holds all components of the runtime
+	static Vector<Neuron> neurons;
+	// only used when SIMPLE_CHARGE is false, and multiple threaded charges are used
+	static Vector<ComplexCharge> charges;
+	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		// mark the system's start time
 		long startTime = System.currentTimeMillis();
 		neurons = new Vector<Neuron>();
 		charges = new Vector<ComplexCharge>();
 		buildNetwork(NUMBER_OF_NEURONS);
 		System.out.println("The network has been generated, and it's initial state has been saved.");
 		System.out.println("A charge will be started on neuron 1, and will run for " + NUMBER_OF_PHASES + " phases.");
-
+		//If only simple charges are being used
 		if (SIMPLE_CHARGE) {
 			Charge charge = new Charge(neurons.elementAt(0));
-			while (phase < NUMBER_OF_PHASES) { // run the number of phases necessary
-				charge.arrive(phase % HARD_TRIM_EVERY == 0); // run arrival code
+			//Run the number of phases specified by the flag
+			while (phase < NUMBER_OF_PHASES) {
+				//Run arrival code
+				charge.arrive(phase % HARD_TRIM_EVERY == 0);
 				// if the phase is synced up with "NEW NEURON EVERY" add a new neuron
 				if (phase % NEURON_EVERY == 0) {
 					Neuron neuron = addNewNeuron(charge.getCurrentLocation()); // adds a new neuron, stemming from current location
+					//artificially move charge to new neuron, if flagged
 					if (ARTIFICIALLY_MOVE_CHARGE) {
-						charge.move(neuron);// artifically move the charge to the new neuron
+						charge.move(neuron);
 					}
 				} else {
+					//If simple charge isn't use, simply run a
 					charge.move();
 				}
 				phase += 1;
