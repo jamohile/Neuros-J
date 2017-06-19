@@ -2,45 +2,42 @@ import java.util.Random;
 import java.util.Vector;
 
 public class Neuron {
-	static int lastID; // provides a way for neurons to always have
-						// unique
-						// id's
+	//Stores the last ID used by any neuron
+	static int lastID;
 	private Integer id;
+	//This object manages all branches for this instance
 	private BranchReferenceManager branchReferenceManager;
-	int totalBranches; //stores all branches, inbound and outbound
-	boolean hasCharge = false; //does the neuron CURRENTLY have a complex charge? used to manage concurrency
+	//Total number of inbound and outbound branches.
+	int totalBranches;
+	//Stores whether the neuron currently posesses a complex charge
+	boolean hasCharge = false;
 
 	public Neuron() {
-		// TODO Auto-generated constructor stub
+		//Assign self a unique id
 		id = lastID + 1;
-		lastID = id; // these lines ensure that ID is always unique
-
+		lastID = id;
+		//instantiate container
 		branchReferenceManager = new BranchReferenceManager();
 	}
-	public int getAverageStrength() { // returns the "average" branch strength
-		return getTotalStrength() / (getNumberOfBranches() + 1);// add one to
-																// compensate for 0
+	//Calculates and return the average strength of all connections
+	public int getAverageStrength() {
+		return getTotalStrength() / (getNumberOfBranches() + 1);
 	}
+	//Gets the total strength of all branches
 	public int getTotalStrength() {
 		return branchReferenceManager.getTotalStrength();
 	}
+	//An overload function to increment strength to another neuron by 1.
 	public void incrementConnection(Neuron neuron) {
 		incrementConnection(neuron, 1);
 	}
+	//Overload function to increment connection to a specific neuron by an arbitrary value.
 	public void incrementConnection(Neuron neuron, int strength) {
 		incrementConnection(neuron, strength, false, false);
 	}
-	public void incrementConnection(Neuron neuron, int strength,
-			boolean forceBidirectional, boolean forceEqualBidirectional) { // forceBIDIRECTIONAL
-																			// will
-																			// be
-																			// used
-																			// when
-		// creating new stem neurons, that
-		// require a connection to the root
-		// if this neuron is already connected to the argument neuron,
-		// strengthen the connection. Otherwise, create a new branch with
-		// strength "1".
+	//Increment a connection, taking into account environment flags.
+	public void incrementConnection(Neuron neuron, int strength, boolean forceBidirectional, boolean forceEqualBidirectional) {
+		//no matter what, increment the branch for this neuron.
 		branchReferenceManager.incrementBranch(neuron, strength);
 		// create bidirectional branch, if setting is enabled
 		if (Neuros.BIDIRECTIONAL_BRANCHES || forceBidirectional) {
@@ -54,6 +51,7 @@ public class Neuron {
 		}
 
 	}
+	//Returns whether or not a connection exists to argument neuron
 	public boolean connectedToNeuron(Neuron neuron) {
 		return branchReferenceManager.containsBranchToNeuron(neuron);
 	}
