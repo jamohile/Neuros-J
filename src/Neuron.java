@@ -55,16 +55,16 @@ public class Neuron {
 	public boolean connectedToNeuron(Neuron neuron) {
 		return branchReferenceManager.containsBranchToNeuron(neuron);
 	}
+	//Takes a strength, relative to total strength of all branches, returns a branch.
 	public Branch getBranchByStrength(int strength) {
 		return branchReferenceManager.getBranchByStrength(strength);
 	}
+	//Calls for a branch kerning, eliminating weaker branches.
 	public void hardTrim(){
 		branchReferenceManager.hardTrim();
 	}
-	public Branch getProbableDestinationBranch() { // returns the likely branch that
-													// a charge
-		// will travel to, based on the weighted
-		// probability search system
+	//Returns the most likely branch a charge will travel to (using random seed)
+	public Branch getProbableDestinationBranch() {
 		Random random = new Random();
 		int bound = branchReferenceManager.getTotalStrength();
 		if (bound != 0) {
@@ -74,34 +74,35 @@ public class Neuron {
 			return null;
 		}
 	}
-	public void updateBranches(Vector<Neuron> history) {// a charge will deliver it's
-														// history dump to this
-														// function
+	//Uses charge history to increment connections
+	public void updateBranches(Vector<Neuron> history) {
 		for (Neuron neuron : history) {
-			if (Neuros.HISTORICAL_WEIGHTING) {// if connection inrecement will be
-												// weighted based on how recent it is
-				incrementConnection(neuron, history.indexOf(neuron)); // increment by
-																		// overall
-																		// position
-																		// in history
+			if (Neuros.HISTORICAL_WEIGHTING) {
+				//increment using index as weight
+				incrementConnection(neuron, history.indexOf(neuron));
 			} else {
-				incrementConnection(neuron); // increment by 1
+				//increment by 1
+				incrementConnection(neuron);
 			}
 		}
 	}
-
+	//getter function for branches
 	public final Vector<Branch> getBranches(){
 		return this.branchReferenceManager.branches;
 	}
+	//getter function for id
 	public int getId() {
 		return id;
 	}
+	//calls for log of id to console, for tracking
 	public void logId() {
 		System.out.println(String.valueOf(id));
 	}
+	//getter for number of branches
 	public int getNumberOfBranches() {
 		return branchReferenceManager.getSize();
 	}
+	//used to generate string representation of neuron.
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
