@@ -26,6 +26,8 @@ public class Neuros {
 	static int HARD_TRIM_EVERY = 1000;
 	//If false, Neuros will run only one charge - synchrously. Else multiple asynchrous.
 	static boolean SIMPLE_CHARGE = false;
+	
+	//Runtime variables
 	// the current phase number
 	static int phase;
 	// a container for neurons, which through sub-objects holds all components of the runtime
@@ -50,7 +52,8 @@ public class Neuros {
 				charge.arrive(phase % HARD_TRIM_EVERY == 0);
 				// if the phase is synced up with "NEW_NEURON_EVERY" add a new neuron
 				if (phase % NEURON_EVERY == 0) {
-					Neuron neuron = addNewNeuron(charge.getCurrentLocation()); // adds a new neuron, stemming from current location
+					// adds a new neuron, stemming from current location
+					Neuron neuron = addNewNeuron(charge.getCurrentLocation()); 
 					//artificially move charge to new neuron, if flagged
 					if (ARTIFICIALLY_MOVE_CHARGE) {
 						charge.move(neuron);
