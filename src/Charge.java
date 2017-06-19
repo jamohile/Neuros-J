@@ -1,54 +1,53 @@
 import java.util.Vector;
 
-/**
- * 
- */
-
-/**
- * @author Jay Mohile, Oxeolo
- *
- */
 public class Charge {
+	//The maximum length of any charge's history
 	static Integer historyLength;
+	//the unique id posessed by this charge
 	Integer id;
+	//The next id which will be aasigned to an instance
 	static int NEXT_ID = 1;
+	//the current location of this charge
 	Neuron currentLocation;
+	//A list of the past locations of this charge
 	Vector<Neuron> history;
-	boolean hasArrived = false; // has the charge ARRIVED, and passed by the concurrency buffer?
+	//True if the charge has arrived, and is not in transit
+	boolean hasArrived = false;
+	//The time of this charge's creation
 	long startTime;
 
 	public Charge(Neuron start) {
-		// TODO Auto-generated constructor stub
+		// Instantiate charge at root neuron
 		currentLocation = start;
 		history = new Vector<Neuron>();
 		startTime = System.currentTimeMillis();
 	}
-
+	//getter for current location
 	public Neuron getCurrentLocation() {
 		return currentLocation;
 	}
-
+	//all administrative code run whenever the charge arrives at a neuron
 	public void arrive(boolean hardTrim) {
 		currentLocation.hasCharge = true;
-		currentLocation.updateBranches(history); // send history to current neuron to
-													// update
+		//Send the charge's past locations to the current location
+		currentLocation.updateBranches(history);
+		//run a hard trim if desired by the runtime
 		if (hardTrim) {
 			currentLocation.hardTrim();
 		}
-		if (history.size() == Neuros.CHARGE_HISTORY_MAX_LENGTH) { // if the history
-																	// has reached
-																	// max length
-			history.remove(0); // remove the oldest element
+		//If the history is full, remove the oldest element
+		if (history.size() == Neuros.CHARGE_HISTORY_MAX_LENGTH) {
+			history.remove(0);
 		}
-		history.addElement(currentLocation); // add the current location as the most
-												// recent element
+		//Add the current location to the history buffer
+		history.addElement(currentLocation);
 
 	}
-
+	//close the network, since the charge has been removed
 	public void removeCharge() {
 		Neuros.closeNetwork(startTime);
 	}
-
+	//move to a new neuron, after calculating where to go
 	public Neuron move() {
 		Branch destination = currentLocation.getProbableDestinationBranch();
 		if (destination != null) {
@@ -58,11 +57,12 @@ public class Charge {
 			return move(destination.neuron);
 		}
 	}
-
+	//Move to an arbitrary neuron
 	public Neuron move(Neuron neuron) {
+		//Remove reference of this charge from current location
 		currentLocation.hasCharge = false;
-		currentLocation = neuron; // at this point, THE CHARGE HAS // FINISHED
-									// TRAVELLING!!!!!!
+		//at this point, the charge has officially moved
+		currentLocation = neuron; 
 		if (currentLocation == null) {
 			removeCharge();
 		}
