@@ -7,12 +7,18 @@ public class NMSInterpreter {
 		String output = "!FileName" + "!" + String.valueOf(startTime) + "!" + neurons.size();
 		for (Neuron neuron : neurons) {
 			output += createNeuronNMS(neuron);
+			//Every 10% alert the user of NMS generation progress
 			if ((neuron.getId()) % (float)(neurons.size() / 10) == 0) {
 				System.out.println(
-						"NMS is " + (int) (100 * ((double) neuron.getId() / (double) neurons.size())) + "% complete.");
+						"NMS is "
+					+ (int) (100 * ((double) neuron.getId() / (double) neurons.size()))
+					+ "% complete.");
 			}
 		}
-		System.out.println("NMS Interpretation has completed, at an average rate of " + (float)neurons.size()/(float)((System.currentTimeMillis() - startTime)/1000)+  " neurons/second.");
+		//Calculate rate of file generation
+		System.out.println("NMS Interpretation has completed, at an average rate of "
+				   + (float)neurons.size()/(float)((System.currentTimeMillis() - startTime)/1000)
+				   +  " neurons/second.");
 		return output;
 	}
 
