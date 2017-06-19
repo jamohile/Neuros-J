@@ -48,7 +48,7 @@ public class Neuros {
 			while (phase < NUMBER_OF_PHASES) {
 				//Run arrival code
 				charge.arrive(phase % HARD_TRIM_EVERY == 0);
-				// if the phase is synced up with "NEW NEURON EVERY" add a new neuron
+				// if the phase is synced up with "NEW_NEURON_EVERY" add a new neuron
 				if (phase % NEURON_EVERY == 0) {
 					Neuron neuron = addNewNeuron(charge.getCurrentLocation()); // adds a new neuron, stemming from current location
 					//artificially move charge to new neuron, if flagged
@@ -56,7 +56,7 @@ public class Neuros {
 						charge.move(neuron);
 					}
 				} else {
-					//If simple charge isn't use, simply run a
+					//If NEW_NEURON_EVERY not satisfied, simply move charge
 					charge.move();
 				}
 				phase += 1;
@@ -65,35 +65,41 @@ public class Neuros {
 							+ "% complete. " + neurons.size() + " neurons have been created.");
 				}
 			}
+			//Notify of charge phase completion
 			System.out.println("Charge phasing has completed, at an average rate of "
 					+ (float) NUMBER_OF_PHASES / (float) ((System.currentTimeMillis() - startTime) / 1000)
 					+ " phases/second. The network will now be analyzed and saved.");
 			closeNetwork(startTime);
 		} else {
+			//If complex charges are used, all charge runtime will be handled by them
 			ComplexCharge.createComplexCharge();
 		}
 	}
-
+	//Called to notify the user of network completiton, and save file
 	public static void closeNetwork(long startTime) {
 		System.out.println("Neuros activity has finished. The network will now be analyzed and saved.");
+		//Save, by default as a .nhr and .nms file
 		logNetwork(startTime, true);
 		logNetwork(startTime, false);
 		System.out.println("Network interpretation has completed, the network's current state has been saved");
 	}
-
-	public static Neuron addNewNeuron(Neuron root) {// add a new neuron, stemming of the root neuron
-		Neuron neuron = new Neuron(); // create a new neuronD
-		neurons.addElement(neuron); // add the neuron to the registry vector
-		int startingStrength = root.getAverageStrength(); // assign the strength to the average of the root neuron, to give it a chance to grow
+	//Add a new neuron, stemming from the parameter neuron
+	public static Neuron addNewNeuron(Neuron root) {
+		Neuron neuron = new Neuron();
+		neurons.addElement(neuron);
+		//Set strength of new neuron to average of root's connections
+		int startingStrength = root.getAverageStrength();
 		neuron.incrementConnection(root, startingStrength, true, true);
 		return neuron;
 	}
-
+	//Build and seed a network with the desired number of neurons
 	private static void buildNetwork(int numNeurons) {
 		for (int x = 0; x < numNeurons; x++) {
+			//Create a new neuron, add to container
 			Neuron neuron = new Neuron();
 			neurons.addElement(neuron);
 			int connections = 0;
+			//Randomly choose an index from neurons.
 			Random random = new Random();
 			int startingBound;
 			if (neurons.size() > 2) {
@@ -101,11 +107,13 @@ public class Neuros {
 			} else {
 				startingBound = 0;
 			}
-			for (int y = startingBound; y < neurons.size() - 1; y++) { // iterate through neurons, and randomly establish connections with up to 20
+			//iterate neurons (from startingBound), randomly make connections with up to 20 (at least 1)
+			for (int y = startingBound; y < neurons.size() - 1; y++) { 
 				if (connections == 0) {
-					neuron.incrementConnection(neurons.elementAt(y)); // add at least one connection, guaranteed
+					neuron.incrementConnection(neurons.elementAt(y));
 					connections += 1;
-				} else if (connections <= 20) { // maximum 20 connections for now
+				// maximum 20 connections for now
+				} else if (connections <= 20) { 
 					if (random.nextBoolean()) {
 						neuron.incrementConnection(neurons.elementAt(y));
 						connections += 1;
@@ -116,13 +124,15 @@ public class Neuros {
 			}
 		}
 	}
-
+	//Function to control saving of network, into nms and nhrs files
 	public static void logNetwork(String name, long startTime, Boolean machineFile) {
+		// toggles between a NeurosMachineState and NeurosHumanState file
 		String logFileName = "LOGS/STATE_" + name + String.valueOf(System.currentTimeMillis())
-				+ ((machineFile) ? ".nms" : ".nhrs"); // toggles between a NeurosMachineState and NeurosHumanState file
+				+ ((machineFile) ? ".nms" : ".nhrs");
 		try {
 			PrintWriter writer = new PrintWriter(logFileName, "UTF-8");
-			if (!machineFile) { // human readable file desired
+			 // human readable file desired
+			if (!machineFile) {
 				writer.println(neurons);
 			} else {
 				// log a compressed nms file, to be machine interpreted
@@ -130,14 +140,12 @@ public class Neuros {
 			}
 			writer.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-
+	//Overloaded function, to use if name is not needed
 	public static void logNetwork(long startTime, Boolean machineFile) {
 		logNetwork("", startTime, machineFile);
 	}
