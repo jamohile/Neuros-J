@@ -19,7 +19,7 @@ A charge's history, logging previous locations and the path taken. Used to expan
 
 #### Excitability
 
-How likely a charge is to split. Charges, once excited, can simultaneously traverse alongside other charges.
+How likely a charge is to split. Charges, once excited, can simultaneously traverse alongside other charges. The system takes advantage of multithreading, and protects against race conditions.
 
 #### Stability
 
