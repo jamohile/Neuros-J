@@ -4,7 +4,7 @@ Neuros-J is a Java implemented core library for Neuros. Neuros, still in its ver
 
 ## Notable Systems / Concepts
 
-### Probabilistic Detdeterermination
+### Probabilistic Determination
 
 Neural network are deterministic. Neuros is built on the core assumption that accurately simulating a dynamic "brain" relies on both
 probability and determination. It seeks to develop a network of neurons, whose growth is influenced by deterministic properties, but mediated through randomness.
